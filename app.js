@@ -10,6 +10,7 @@ import routes from 'routes/index';
 import users from 'routes/users';
 import mongoose from 'mongoose';
 mongoose.Promise = Promise;
+mongoose.connect(process.env.MONGO_URI)
 
 var app = express();
 
