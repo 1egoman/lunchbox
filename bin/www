@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /* vim: set syntax=javascript: */
+require("babel-register");
 
 /**
  * Module dependencies.

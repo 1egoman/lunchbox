@@ -1,5 +1,8 @@
-var express = require('express');
+import express from 'express';
 var router = express.Router();
+
+import Item from 'models/item';
+import List from 'models/list';
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
