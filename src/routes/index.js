@@ -6,11 +6,6 @@ import List from 'models/list';
 import mongoose from 'mongoose';
 const PAGE_LENGTH = 20;
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', {title: 'Lunchbox: food management'});
-});
-
 function paginate(req, query) {
   let page = req.params.page || req.body.page;
   return query

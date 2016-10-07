@@ -32,7 +32,10 @@ app.get('/', (req, res, next) => {
 
 app.use('/v1', (req, res, next) => {
   // Protect routes
-  if (req.headers['Authorization'] === `Bearer ${process.env.SECRET_KEY}`) {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization === `Bearer ${process.env.SECRET_KEY}`
+  ) {
     next();
   } else {
     res.status(401).send({
