@@ -108,7 +108,7 @@ router.get('/lists/:listId', (req, res) => {
       res.status(404).send({
         status: 'ok',
         msg: 'No such list.',
-        code: 'com.github.1egoman.lunchbox.no_such_list',
+        code: 'net.rgaus.lunchbox.no_such_list',
       });
     }
   });

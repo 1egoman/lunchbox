@@ -7,7 +7,6 @@ import bodyParser from 'body-parser';
 import Promise from 'bluebird';
 
 import routes from 'routes/index';
-import users from 'routes/users';
 import mongoose from 'mongoose';
 mongoose.Promise = Promise;
 mongoose.connect(process.env.MONGODB_URI)
@@ -26,8 +25,18 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
-app.use('/users', users);
+app.use('/', (req, res, next) => {
+  // Protect routes
+  if (req.headers['Authorization'] === `Bearer ${process.env.SECRET_KEY}`) {
+    next();
+  } else {
+    res.status(401).send({
+      status: 'err',
+      msg: 'Unauthorized',
+      code: 'net.rgaus.lunchbox.unauthorized'
+    });
+  }
+}, routes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
