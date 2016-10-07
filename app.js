@@ -25,6 +25,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+/* GET home page. */
+app.get('/', (req, res, next) => {
+  res.render('index', {title: 'Lunchbox: food management'});
+});
+
 app.use('/v1', (req, res, next) => {
   // Protect routes
   if (req.headers['Authorization'] === `Bearer ${process.env.SECRET_KEY}`) {
