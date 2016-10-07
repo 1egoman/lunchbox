@@ -25,7 +25,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', (req, res, next) => {
+app.use('/v1', (req, res, next) => {
   // Protect routes
   if (req.headers['Authorization'] === `Bearer ${process.env.SECRET_KEY}`) {
     next();
