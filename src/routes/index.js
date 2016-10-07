@@ -43,7 +43,7 @@ router.post('/items', (req, res) => {
 
   item.save()
   .then(items => {
-    res.status(201).send({status: 'ok',});
+    res.status(201).send({status: 'ok', id: items._id});
   });
 })
 router.put('/items/:itemId', (req, res) => {
@@ -113,7 +113,7 @@ router.post('/lists', (req, res) => {
 
   list.save()
   .then(lists => {
-    res.status(201).send({status: 'ok'});
+    res.status(201).send({status: 'ok', id: lists._id});
   });
 })
 router.put('/lists/:listId', (req, res) => {
