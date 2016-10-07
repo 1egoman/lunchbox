@@ -8,7 +8,7 @@ const PAGE_LENGTH = 20;
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  res.render('index', {title: 'Lunchbox: food management'});
 });
 
 function paginate(req, query) {
