@@ -18,7 +18,7 @@ function paginate(req, query) {
     .limit(PAGE_LENGTH);
 }
 
-// Items
+// Item CRUD routes
 router.get('/items', (req, res) => {
   let query = Item
   .find({})
@@ -62,8 +62,20 @@ router.put('/items/:itemId', (req, res) => {
     });
   });
 });
+router.delete('/items/:itemId', (req, res) => {
+  Item
+  .remove({_id: req.params.itemId})
+  .exec()
+  .then(item => {
+    res.status(200).send({
+      status: 'ok',
+      nmodified: item.nModified,
+    });
+  });
+  1
+});
 
-// List
+// List CRUD routes
 router.get('/lists', (req, res) => {
   let query = List
   .find({})
@@ -87,10 +99,18 @@ router.get('/lists/:listId', (req, res) => {
 
   .exec()
   .then(list => {
-    res.status(200).send({
-      status: 'ok',
-      list,
-    });
+    if (list) {
+      res.status(200).send({
+        status: 'ok',
+        list,
+      });
+    } else {
+      res.status(404).send({
+        status: 'ok',
+        msg: 'No such list.',
+        code: 'com.github.1egoman.lunchbox.no_such_list',
+      });
+    }
   });
 })
 router.post('/lists', (req, res) => {
@@ -112,12 +132,23 @@ router.put('/lists/:listId', (req, res) => {
     });
   });
 });
+router.delete('/lists/:listId', (req, res) => {
+  List
+  .remove({_id: req.params.listId})
+  .exec()
+  .then(list => {
+    res.status(200).send({
+      status: 'ok',
+      nmodified: list.nModified,
+    });
+  });
+  1
+});
 
 // List items
 router.get('/lists/:listId/items/:itemId', (req, res) => {
   List
   .findOne({_id: req.params.listId})
-  .select('contents')
   .exec()
   .then(({contents}) => {
     res.status(200).send({
@@ -126,28 +157,45 @@ router.get('/lists/:listId/items/:itemId', (req, res) => {
     });
   });
 });
-router.post('/lists/:listId/items', (req, res) => {
+
+// add an item to a list
+router.post('/lists/:listId/contents', (req, res) => {
   // body = {item: 'itemid here'}
 
   Promise.all([
     Item.findOne({_id: req.body.item}).exec(),
     List.findOne({_id: req.body.item}).exec(),
   ]).then(([item, list]) => {
-    console.log(item, list)
-
-    let a = {};
-    if (item) { a.items = item; }
-    if (list) { a.lists = list; }
+    // construct a query with both a list and an item
+    let query = {};
+    if (item) { query.items = item; }
+    if (list) { query.lists = list; }
 
     return List
-    .update({_id: req.params.listId}, {
-      $push: a,
-    })
+    .update({_id: req.params.listId}, {$push: query})
     .exec()
   }).then(item => {
     res.status(201).send({status: 'ok'});
   });
 });
-router.put('/lists/:listId/items/:itemId')
+
+// remove items from list
+router.delete('/lists/:listId/contents/:itemId', (req, res) => {
+  Promise.all([
+    Item.findOne({_id: req.params.itemId}).exec(),
+    List.findOne({_id: req.params.itemId}).exec(),
+  ]).then(([item, list]) => {
+    // construct a query with both a list and an item
+    let query = {};
+    if (item) { query.items = item._id; }
+    if (list) { query.lists = list._id; }
+
+    return List
+    .update({_id: req.params.listId}, {$pull: query})
+    .exec();
+  }).then(item => {
+    res.status(201).send({status: 'ok'});
+  });
+});
 
 module.exports = router;
