@@ -20,7 +20,7 @@ let defaultStoreReference = {
 // Given an itemid and store search strategy, find the price and the store to
 // buy an item at.
 exports.getItemPrice = function getItemPrice(itemId, quantityRequested, store, compareAtUnit, storeReference) {
-  compareAtUnit = compareAtUnit || 'cup';
+  compareAtUnit = compareAtUnit || 'cup'; // TODO: what happens if a cup isn't a valid unit in this context?
   storeReference = storeReference || defaultStoreReference;
   let prices = [];
   let stores = [];
