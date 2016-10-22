@@ -5,14 +5,6 @@ const util = require('util');
 let input = require('./grocerylist.json')
 let getItemPrice = require('./stores').getItemPrice;
 
-// a sample pantry
-let pantryList = [
-  {
-    _id: "cream-cheese",
-    quantity: "1 cup",
-  }
-];
-
 // This function will, given a pantry, subtract anything from the recipe ingredients that is already on
 // hand. Also, if the recipe uses that item, it will be subtracted from the pantry. Unfortunately, that
 // means this function has side effects (on `pantryList`). Whatever though, it works.
@@ -63,7 +55,7 @@ function addToItemsCombineDupes(initialItems, itemsToAdd) {
 // Given a list, convert to an array of items that doesn't have duplicates
 // Also, combine quantitys. For example, if there are two recipes that require 1
 // cup of milk, the output will have one item with a quantity of 1 pint.
-function parseList(list) {
+function flattenList(list) {
   if (!Array.isArray(list.contents)) {
     throw new Error(`List ${list.name} doesn't have a .contents property that's an array!`)
   }
@@ -75,22 +67,15 @@ function parseList(list) {
       items = addToItemsCombineDupes(items, [item]);
     } else {
       // must be a list?
-      items = addToItemsCombineDupes(items, parseList(item));
+      items = addToItemsCombineDupes(items, flattenList(item));
     }
   });
 
   return items;
 }
 
-// Do the list assembly for realsies!
-let itemList = parseList(input);
-console.log('\n\n', util.inspect(removePantryItemsFromList(itemList, pantryList), false, Infinity, true));
-console.log('\n\n', util.inspect(pantryList, false, Infinity, true));
-
-let itemPricedList = itemList.map(item => {
-  return {
-    item,
-    price: getItemPrice(item._id, item.quantity, item.store),
-  };
-});
-// console.log('\n\n', util.inspect(itemPricedList, false, Infinity, true));
+module.exports = {
+  flattenList,
+  addToItemsCombineDupes,
+  removePantryItemsFromList,
+};
