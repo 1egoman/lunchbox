@@ -1,0 +1,30 @@
+{
+  "name": "Grocery List",
+  "type": "list",
+  "contents": [
+    {
+      "_id": "cream-cheese",
+      "type": "item",
+      "name": "Cream Cheese",
+      "quantity": "0.5 oz",
+      "store": {
+        "type": "cheapest"
+      }
+    },
+    {
+      "name": "A sub-list",
+      "type": "list",
+      "contents": [
+        {
+          "_id": "cream-cheese",
+          "type": "item",
+          "name": "Cream cheese",
+          "quantity": "1 oz",
+          "store": {
+            "type": "first"
+          }
+        }
+      ]
+    }
+  ]
+}
