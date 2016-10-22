@@ -5,13 +5,14 @@ const Unitz = require('unitz');
 
 let defaultStoreReference = {
   wegmans: {
-    'milk-id': {
-      '1 cup': '$5.00',
-      '2 cups': '$8.00',
+    'black-beans': {
+      '16 oz': '$3.00',
     },
-    'cream-cheese': {
-      '1 cup': '$5.00',
-      '2 cups': '$8.00',
+    'tortillas': {
+      '8 tortillas': '$8.00',
+    },
+    'cheddar-cheese': {
+      '8 oz': '$2.00',
     },
   },
 };
@@ -37,7 +38,10 @@ exports.getItemPrice = function getItemPrice(itemId, quantityRequested, store, c
         let commonComparisonQuantity = Unitz.parse(qty).convert(compareAtUnit);
 
         // Round up to the next whole package, since we can't buy half a package
-        commonComparisonQuantity = Math.ceil(commonComparisonQuantity)
+        commonComparisonQuantity = Math.ceil(commonComparisonQuantity);
+        if (commonComparisonQuantity === 0) {
+          commonComparisonQuantity = 1; // a minumum of one is allowed
+        }
         // console.log('commonComparisonQuantity', commonComparisonQuantity)
         // if (commonComparisonQuantity > 1) {
         //   console.warn('partial package was attempted, rounding up to 1 whole package')

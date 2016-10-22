@@ -103,6 +103,23 @@ describe('stores.getItemPrice', function() {
         store: 'storeA',
       });
     });
+    it(`should, even when using a big comparison unit, not round down super small quantitys to zero`, function() {
+      let output = getItemPrice(
+        'itemId', // the item
+        '1 oz', // how much we want (a large quantity that makes this easy to test against)
+        {type: 'first'}, // how to pick the store to use
+        '1 gallon', // the unit to convert down to in order to compare prices. This uses the default.
+        storeReference // Use the above store table when doing the test.
+      );
+
+      assert.deepEqual(output, {
+        totalCost: '$5.00',
+        unitsRequired: 1, // should round this up to one
+        pricePerUnit: '$5.00',
+        quantityProductSoldIn: '1 cup', // should be the smallest unit, 1 cup
+        store: 'storeA',
+      });
+    });
   });
   describe('store selectors', function() {
     it(`should pick the first store`, function() {
