@@ -6,6 +6,8 @@ import List from 'models/list';
 import mongoose from 'mongoose';
 const PAGE_LENGTH = 20;
 
+import priceify from '../../store-algo/priceify';
+
 function paginate(req, query) {
   let page = req.params.page || req.body.page;
   return query
@@ -16,7 +18,7 @@ function paginate(req, query) {
 // Item CRUD routes
 router.get('/items', (req, res) => {
   let query = Item
-  .find({})
+  .find(req.query)
   .select('-__v');
 
   paginate(req, query).exec().then(items => {
@@ -31,11 +33,8 @@ router.get('/items/:itemId', (req, res) => {
   .findOne({_id: req.params.itemId})
   .select('-__v')
   .exec()
-  .then(items => {
-    res.status(200).send({
-      status: 'ok',
-      item,
-    });
+  .then(item => {
+    res.status(200).send(item);
   });
 })
 router.post('/items', (req, res) => {
@@ -95,10 +94,7 @@ router.get('/lists/:listId', (req, res) => {
   .exec()
   .then(list => {
     if (list) {
-      res.status(200).send({
-        status: 'ok',
-        list,
-      });
+      res.status(200).send(list);
     } else {
       res.status(404).send({
         status: 'ok',
@@ -190,6 +186,62 @@ router.delete('/lists/:listId/contents/:itemId', (req, res) => {
     .exec();
   }).then(item => {
     res.status(201).send({status: 'ok'});
+  });
+});
+
+router.get('/lists/:listId/calc', (req, res) => {
+  // Given a list item fetched from the mongo database, do a few things:
+  // - convert the mongo output to a object (with list.toObject)
+  // - Convert the `item` and `lists` keys into one `contents` key. This
+  // involves injecting a `type` into each list or item. (this is done
+  // recuresively!)
+  function traverseList(depth, level) {
+    if (depth > 50) {
+      throw new Error('Either lists are nested really deeply, or there is a list inside of itself.');
+    }
+
+    // first, resolve all the items
+    return Promise.all([
+      // expand all items in the passed list
+      Promise.all(level.items.map(item => {
+        return Item.findOne({_id: item}).exec()
+      })),
+      // expand all lists in the passed list
+      Promise.all(level.lists.map(list => {
+        return List.findOne({_id: list}).exec()
+      })),
+    ]).then(([items, lists]) => {
+      // then, recursively resolve each list's contents
+      return Promise.all(
+        lists.map(traverseList.bind(null, ++depth))
+      ).then(resolvedLists => {
+        // remove items/lists, and add contents
+        return Object.assign({}, level.toObject(), {
+          items: undefined,
+          lists: undefined,
+          contents: [
+            ...items.map(i => {
+              return Object.assign({}, i.toObject(), {type: 'item'});
+            }),
+            ...resolvedLists.map(i => {
+              return Object.assign({}, i, {type: 'list'});
+            }),
+          ],
+        })
+      });
+    });
+  }
+
+  List.findOne({_id: req.params.listId}).exec().then(list => {
+    // convert to a better format
+    if (!list) {
+      res.status(404).send({error: "No such list with that id!"});
+    }
+
+    // first, expand the schema using `traverseList` above
+    traverseList(0, list).then(d => {
+      res.send(priceify.flattenList(d)); // then flatten
+    }).catch(e => console.error(e.stack) && res.send('error'))
   });
 });
 

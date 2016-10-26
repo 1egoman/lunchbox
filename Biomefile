@@ -2,3 +2,4 @@
 # More info at https://github.com/1egoman/biome
 name=lunchbox
 MONGODB_URI=
+SECRET_KEY=

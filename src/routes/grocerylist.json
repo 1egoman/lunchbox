@@ -1,0 +1,42 @@
+{
+  "name": "Grocery List",
+  "type": "list",
+  "contents": [
+    {
+      "_id": "cream-cheese",
+      "type": "item",
+      "name": "Cream Cheese",
+      "quantity": "0.5 oz",
+      "store": {
+        "type": "cheapest"
+      }
+    },
+    {
+      "name": "Quesidillas",
+      "type": "list",
+      "contents": [
+        {
+          "_id": "black-beans",
+          "type": "item",
+          "name": "Black Beans",
+          "quantity": "2oz",
+          "store": {"type": "first"}
+        },
+        {
+          "_id": "tortillas",
+          "type": "item",
+          "name": "Tortillas",
+          "quantity": "1 tortilla",
+          "store": {"type": "first"}
+        },
+        {
+          "_id": "cheddar-cheese",
+          "type": "item",
+          "name": "Cheddar Cheese",
+          "quantity": "2 oz",
+          "store": {"type": "first"}
+        }
+      ]
+    }
+  ]
+}
