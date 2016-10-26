@@ -4,12 +4,53 @@ const stores = require('./stores');
 
 // Step one: Define all the inputs:
 // The list of what meals 
-const groceryList = require('./grocerylist.json'); // get a list of items to make
+const groceryList = {
+  name: "Grocery List",
+  type: "list",
+  contents: [
+    {
+      _id: "cream-cheese",
+      type: "item",
+      name: "Cream Cheese",
+      quantity: "0.5 oz",
+      store: {
+        type: "cheapest"
+      }
+    },
+    {
+      name: "Quesidillas",
+      type: "list",
+      contents: [
+        {
+          _id: "black-beans",
+          type: "item",
+          name: "Black Beans",
+          quantity: "2oz",
+          store: {"type": "first"}
+        },
+        {
+          _id: "tortillas",
+          type: "item",
+          name: "Tortillas",
+          quantity: "1 tortilla",
+          store: {"type": "first"}
+        },
+        {
+          _id: "cheddar-cheese",
+          type: "item",
+          name: "Cheddar Cheese",
+          quantity: "2 oz",
+          store: {"type": "first"}
+        }
+      ]
+    }
+  ],
+};
 // The pantry is what is currently on-hand.
 const pantry = [
   {_id: "cream-cheese", name: "Cream Cheese", quantity: "1 cup"},
 ];
-// The store proeprties are defined in stores.js. Check them ot there!
+// The store properties are defined in stores.js. Check them out there!
 
 // Step two: Flatten the list
 // This takes all the nested lists and converts to a flat list of items.
