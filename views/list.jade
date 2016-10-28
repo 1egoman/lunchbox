@@ -6,5 +6,18 @@ block content
     ul
       li <strong>My Type</strong>: #{list.type}
       li <strong>My List Type</strong>: #{list.listType}
+
+    h2 List contents:
+    ul
+      each item in list.contents
+        if item.type == "item"
+          // An item
+          li
+            h4= item.name
+            em= item.quantity
+        else
+          // A list
+          li
+            h4= item.name
   else
     p No such list with that id!
