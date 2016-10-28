@@ -1,6 +1,7 @@
 "use strict";
 const priceify = require('./priceify');
 const stores = require('./stores');
+const recipes = require('./recipes');
 
 // Step one: Define all the inputs:
 // The list of what meals 
@@ -8,47 +9,13 @@ const groceryList = {
   name: "Grocery List",
   type: "list",
   contents: [
-    {
-      _id: "cream-cheese",
-      type: "item",
-      name: "Cream Cheese",
-      quantity: "0.5 oz",
-      store: {
-        type: "cheapest"
-      }
-    },
-    {
-      name: "Quesidillas",
-      type: "list",
-      contents: [
-        {
-          _id: "black-beans",
-          type: "item",
-          name: "Black Beans",
-          quantity: "2oz",
-          store: {"type": "first"}
-        },
-        {
-          _id: "tortillas",
-          type: "item",
-          name: "Tortillas",
-          quantity: "1 tortilla",
-          store: {"type": "first"}
-        },
-        {
-          _id: "cheddar-cheese",
-          type: "item",
-          name: "Cheddar Cheese",
-          quantity: "2 oz",
-          store: {"type": "first"}
-        }
-      ]
-    }
+    recipes.FLOUR_CITY_PASTA,
+    recipes.SALAD,
   ],
 };
 // The pantry is what is currently on-hand.
 const pantry = [
-  {_id: "cream-cheese", name: "Cream Cheese", quantity: "1 cup"},
+  {name: "Cream Cheese", quantity: "1 cup"},
 ];
 // The store properties are defined in stores.js. Check them out there!
 
@@ -67,7 +34,7 @@ let itemsToBuy = priceify.removePantryItemsFromList(flattenedGroceryList, pantry
 let pricedList = itemsToBuy.map(item => {
   return {
     item,
-    price: stores.getItemPrice(item._id, item.quantity, item.store),
+    price: stores.getItemPrice(item.name, item.quantity, item.store),
   };
 });
 

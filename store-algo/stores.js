@@ -5,13 +5,13 @@ const Unitz = require('unitz');
 
 let defaultStoreReference = {
   wegmans: {
-    'black-beans': {
-      '16 oz': '$3.00',
+    'Carrot': {
+      '1 carrot': '$3.00',
     },
-    'tortillas': {
+    'Tortillas': {
       '8 tortillas': '$8.00',
     },
-    'cheddar-cheese': {
+    'Cheddar Cheese': {
       '8 oz': '$2.00',
     },
   },
@@ -99,7 +99,7 @@ exports.getItemPrice = function getItemPrice(itemId, quantityRequested, store, c
     }
   }
 
-  switch (store.type) {
+  switch (store && store.type) {
     // "first" method: just pick the first store.
     case 'first':
       if (prices.length) {
@@ -108,6 +108,7 @@ exports.getItemPrice = function getItemPrice(itemId, quantityRequested, store, c
         return Promise.reject(new Error(`There are no matching prices for this item at the given stores.`));
       }
     // "cheapest" method: pick the cheapest store
+    case undefined:
     case 'cheapest':
       let parsedPrices = prices.map(p => accounting.unformat(p.totalCost));
       let index = parsedPrices.indexOf(Math.min.apply(null, parsedPrices));

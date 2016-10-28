@@ -12,17 +12,29 @@
       }
     },
     {
-      "name": "A sub-list",
+      "name": "Quesidillas",
       "type": "list",
       "contents": [
         {
-          "_id": "cream-cheese",
+          "_id": "black-beans",
           "type": "item",
-          "name": "Cream cheese",
-          "quantity": "1 oz",
-          "store": {
-            "type": "first"
-          }
+          "name": "Black Beans",
+          "quantity": "2oz",
+          "store": {"type": "first"}
+        },
+        {
+          "_id": "tortillas",
+          "type": "item",
+          "name": "Tortillas",
+          "quantity": "1 tortilla",
+          "store": {"type": "first"}
+        },
+        {
+          "_id": "cheddar-cheese",
+          "type": "item",
+          "name": "Cheddar Cheese",
+          "quantity": "2 oz",
+          "store": {"type": "first"}
         }
       ]
     }

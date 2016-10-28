@@ -11,7 +11,7 @@ let getItemPrice = require('./stores').getItemPrice;
 function removePantryItemsFromList(list, pantryList) {
   return list.map(item => {
     // get the amount of the given item that's currently in the pantry
-    let pantryItem = pantryList.find(i => i._id === item._id);
+    let pantryItem = pantryList.find(i => i.name === item.name);
 
     if (pantryItem) {
       // calculate the new quantity
@@ -36,7 +36,7 @@ function removePantryItemsFromList(list, pantryList) {
 // When it combines dupes, it adds the quantities together.
 function addToItemsCombineDupes(initialItems, itemsToAdd) {
   return itemsToAdd.reduce((items, item) => {
-    let itemIndex = items.findIndex(i => i._id === item._id);
+    let itemIndex = items.findIndex(i => i.name === item.name);
 
     if (itemIndex === -1) {
       return [...items, item];
