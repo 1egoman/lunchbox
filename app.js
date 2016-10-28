@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 import Promise from 'bluebird';
 
 import api from 'routes/api';
+import index from 'routes/index';
 import mongoose from 'mongoose';
 mongoose.Promise = Promise;
 mongoose.connect(process.env.MONGODB_URI)
@@ -45,6 +46,8 @@ app.use('/v1', (req, res, next) => {
     });
   }
 }, api);
+
+app.use('/', index);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

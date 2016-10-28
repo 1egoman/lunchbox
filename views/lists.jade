@@ -1,0 +1,8 @@
+extends layout
+
+block content
+  h1 All lists
+  ul
+    each list in lists
+      li
+        a(href="/lists/#{list._id}")= list.name

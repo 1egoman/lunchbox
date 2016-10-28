@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  if list
+    h1= list.name
+    ul
+      li <strong>My Type</strong>: #{list.type}
+      li <strong>My List Type</strong>: #{list.listType}
+  else
+    p No such list with that id!
