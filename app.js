@@ -6,7 +6,7 @@ import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import Promise from 'bluebird';
 
-import routes from 'routes/index';
+import api from 'routes/api';
 import mongoose from 'mongoose';
 mongoose.Promise = Promise;
 mongoose.connect(process.env.MONGODB_URI)
@@ -44,7 +44,7 @@ app.use('/v1', (req, res, next) => {
       code: 'net.rgaus.lunchbox.unauthorized'
     });
   }
-}, routes);
+}, api);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
