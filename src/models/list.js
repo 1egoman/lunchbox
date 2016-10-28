@@ -1,10 +1,17 @@
 import mongoose from 'mongoose';
 
 const schema = new mongoose.Schema({
-  name: {'type': 'string'},
+  // both
+  name: 'string',
   tags: ['string'],
-  items: [{type: mongoose.Schema.Types.ObjectId, ref: 'Item'}],
-  lists: [{type: mongoose.Schema.Types.ObjectId, ref: 'List'}],
+  type: 'string',
+
+  // list only
+  listType: 'string',
+  contents: ['List'],
+
+  // item only
+  quantity: 'string',
 });
 
 export default mongoose.model('List', schema);
