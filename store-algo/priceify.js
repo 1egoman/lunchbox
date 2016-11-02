@@ -8,7 +8,7 @@ let getItemPrice = require('./stores').getItemPrice;
 // This function will, given a pantry, subtract anything from the recipe ingredients that is already on
 // hand. Also, if the recipe uses that item, it will be subtracted from the pantry. Unfortunately, that
 // means this function has side effects (on `pantryList`). Whatever though, it works.
-function removePantryItemsFromList(list, pantryList) {
+export function removePantryItemsFromList(list, pantryList) {
   return list.map(item => {
     // get the amount of the given item that's currently in the pantry
     let pantryItem = pantryList.find(i => i.name === item.name);
@@ -34,7 +34,7 @@ function removePantryItemsFromList(list, pantryList) {
 
 // add an item to the items array while ensuring that duplicates are combined
 // When it combines dupes, it adds the quantities together.
-function addToItemsCombineDupes(initialItems, itemsToAdd) {
+export function addToItemsCombineDupes(initialItems, itemsToAdd) {
   return itemsToAdd.reduce((items, item) => {
     let itemIndex = items.findIndex(i => i.name === item.name);
 
@@ -55,7 +55,7 @@ function addToItemsCombineDupes(initialItems, itemsToAdd) {
 // Given a list, convert to an array of items that doesn't have duplicates
 // Also, combine quantitys. For example, if there are two recipes that require 1
 // cup of milk, the output will have one item with a quantity of 1 pint.
-function flattenList(list) {
+export function flattenList(list) {
   if (!Array.isArray(list.contents)) {
     throw new Error(`List ${list.name} doesn't have a .contents property that's an array!`)
   }
@@ -73,9 +73,3 @@ function flattenList(list) {
 
   return items;
 }
-
-module.exports = {
-  flattenList,
-  addToItemsCombineDupes,
-  removePantryItemsFromList,
-};

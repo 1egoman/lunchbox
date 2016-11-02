@@ -5,8 +5,11 @@ import Item from 'models/item';
 import mongoose from 'mongoose';
 const PAGE_LENGTH = 20;
 
-import priceify from '../../store-algo/priceify';
-import stores from '../../store-algo/stores';
+import {
+  flattenList,
+  removePantryItemsFromList,
+} from '../../store-algo/priceify';
+import {getItemPrice} from '../../store-algo/stores';
 
 function paginate(req, query) {
   let page = req.params.page || req.body.page || 0;
@@ -229,10 +232,10 @@ router.get('/calc', (req, res) => {
 
       // first, expand the schema using `traverseItem` above
       // traverseItem(0, list).then(expandedItem => {
-      let flattenedGroceryItem = priceify.flattenItem(list);
-      let itemsToBuy = priceify.removePantryItemsFromItem(flattenedGroceryItem, pantry.contents);
+      let flattenedGroceryItem = flattenList(list);
+      let itemsToBuy = removePantryItemsFromList(flattenedGroceryItem, pantry.contents);
       res.send(itemsToBuy.map(item => {
-        return {item, price: stores.getItemPrice(item.name, item.quantity, {type: "cheapest"})};
+        return {item, price: getItemPrice(item.name, item.quantity, {type: "cheapest"})};
       }));
       // }).catch(e => console.error(e.stack) && res.send('error'))
     });
