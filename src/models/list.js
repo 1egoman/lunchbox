@@ -14,4 +14,7 @@ const schema = new mongoose.Schema({
   quantity: 'string',
 });
 
+// Add full-text search on the name
+schema.index({name: 'text'});
+
 export default mongoose.model('List', schema);

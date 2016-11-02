@@ -9,11 +9,32 @@ import priceify from '../../store-algo/priceify';
 import stores from '../../store-algo/stores';
 
 function paginate(req, query) {
-  let page = req.params.page || req.body.page;
+  let page = req.params.page || req.body.page || 0;
   return query
     .skip(page * PAGE_LENGTH)
     .limit(PAGE_LENGTH);
 }
+
+// Search through list names
+// GET /lists/search=Search+Query
+router.get('/lists/search', (req, res) => {
+  let query = req.query.q || req.query.query;
+  if (query) {
+    return paginate(
+      req,
+      List.find({$text: {$search: query}})
+    ).exec().then(contents => {
+      res.status(200).send({status: 'ok', contents});
+    });
+  } else {
+    res.status(400).send({
+      status: 'err',
+      msg: 'No query parameter specified',
+      code: 'net.rgaus.lunchbox.no_search_query',
+    });
+  }
+});
+
 
 // List CRUD routes
 router.get('/lists', (req, res) => {
@@ -81,22 +102,41 @@ router.delete('/lists/:listId', (req, res) => {
   });
 });
 
-// Get list contents
-router.get('/lists/:listId/contents', (req, res) => {
+// Get a reference to either the pantry or the grocery list
+router.get('/lists/pantry', (req, res) => {
   List
-  .findOne({_id: req.params.listId})
+  .findOne({listType: 'pantry', type: 'list'})
+  .select('-__v')
   .exec()
-  .then(data => {
-    if (data === null) {
-      res.status(400).send({error: "No such list!"})
+  .then(list => {
+    if (list) {
+      res.status(200).send(list);
     } else {
-      res.status(200).send({
+      res.status(404).send({
         status: 'ok',
-        contents: data.contents,
+        msg: 'No such list.',
+        code: 'net.rgaus.lunchbox.no_such_list',
       });
     }
   });
-});
+})
+router.get('/lists/grocery', (req, res) => {
+  List
+  .findOne({listType: 'grocery', type: 'list'})
+  .select('-__v')
+  .exec()
+  .then(list => {
+    if (list) {
+      res.status(200).send(list);
+    } else {
+      res.status(404).send({
+        status: 'ok',
+        msg: 'No such list.',
+        code: 'net.rgaus.lunchbox.no_such_list',
+      });
+    }
+  });
+})
 
 // add an item to a list
 router.post('/lists/:listId/contents', (req, res) => {
@@ -112,7 +152,10 @@ router.post('/lists/:listId/contents', (req, res) => {
       _id: req.params.listId
     }, {
       $push: {
-        contents: Object.assign({}, list.toObject(), {quantity: req.body.quantity}),
+        contents: Object.assign({}, list.toObject(), {
+          // data to filter through from the body to the list contents
+          quantity: req.body.quantity,
+        }),
       },
     }).exec();
   }).then(item => {
