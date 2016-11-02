@@ -21,9 +21,11 @@
     "jade": "~1.11.0",
     "morgan": "~1.7.0",
     "serve-favicon": "~2.3.0",
-    "unitz": "1egoman/unitz"
+    "unitz": "1egoman/unitz",
+    "uuid": "^2.0.3"
   },
   "devDependencies": {
+    "faker": "^3.1.0",
     "mocha": "^3.1.2",
     "sinon": "^1.17.6",
     "sinon-as-promised": "^4.0.2",

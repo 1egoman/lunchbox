@@ -3,6 +3,35 @@ import constructRouter, {PAGE_LENGTH} from '../src/routes/api';
 const assert = require('assert');
 const supertest = require('supertest');
 const sinon = require('sinon');
+import {v4 as uuid} from 'uuid';
+import faker from 'faker';
+
+function mockItem() {
+  return {
+    _id: uuid(),
+    name: faker.internet.userName(),
+    type: 'item',
+    quantity: '1 cup',
+  };
+}
+
+function mockList({listType}) {
+  let contents = [];
+  let howManyItems = Math.floor(Math.random() * 10);
+
+  for (let i = 0; i < howManyItems; i++) {
+    contents.push(mockItem());
+  }
+
+  return {
+    _id: uuid(),
+    type,
+    name: "Sample item",
+    listType: listType || 'recipe',
+    contents,
+    tags: [],
+  };
+}
 
 // Given a router, bind it to a server so we can test against it.
 function routerToServer(router) {
@@ -15,7 +44,8 @@ function routerToServer(router) {
 
 describe('api router', function() {
   it('should get all items/lists', function(done) {
-    let itemArray = [{foo: 'bar'}];
+    let itemArray = [mockItem(), mockItem(), mockItem()];
+    console.log(itemArray)
 
     // Mock out the model
     let model = {};
