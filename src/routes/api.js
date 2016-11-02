@@ -51,6 +51,7 @@ export default function constructRouter(Item) {
     });
   });
   router.get('/items/:listId', (req, res) => {
+    console.log(123, Object.keys(Item))
     return Item
     .findOne({_id: req.params.listId})
     .select('-__v')
@@ -67,7 +68,7 @@ export default function constructRouter(Item) {
         });
       }
     });
-  })
+  });
   router.post('/items', (req, res) => {
     let item = new Item(req.body);
 
