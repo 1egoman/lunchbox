@@ -1,19 +1,19 @@
 import express from 'express';
 var router = express.Router();
 
-import List from 'models/list';
+import Item from 'models/item';
 import mongoose from 'mongoose';
 const PAGE_LENGTH = 20;
 
-// List CRUD routes
+// item CRUD routes
 router.get('/lists', (req, res) => {
-  List.find({}).exec().then(lists => {
+  Item.find({}).exec().then(lists => {
     res.render('lists', {lists});
   });
 });
 
 router.get('/lists/:listId', (req, res) => {
-  List.findOne({_id: req.params.listId}).exec().then(list => {
+  Item.findOne({_id: req.params.listId}).exec().then(list => {
     res.render('list', {list});
   });
 });

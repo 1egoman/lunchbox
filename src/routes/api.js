@@ -1,7 +1,7 @@
 import express from 'express';
 var router = express.Router();
 
-import List from 'models/list';
+import Item from 'models/item';
 import mongoose from 'mongoose';
 const PAGE_LENGTH = 20;
 
@@ -15,14 +15,14 @@ function paginate(req, query) {
     .limit(PAGE_LENGTH);
 }
 
-// Search through list names
-// GET /lists/search=Search+Query
-router.get('/lists/search', (req, res) => {
+// Search through item names
+// GET /item/search=Search+Query
+router.get('/items/search', (req, res) => {
   let query = req.query.q || req.query.query;
   if (query) {
     return paginate(
       req,
-      List.find({$text: {$search: query}})
+      Item.find({$text: {$search: query}})
     ).exec().then(contents => {
       res.status(200).send({status: 'ok', contents});
     });
@@ -36,27 +36,21 @@ router.get('/lists/search', (req, res) => {
 });
 
 
-// List CRUD routes
-router.get('/lists', (req, res) => {
-  let query = List
-  .find({})
-  .select('-__v')
-  .populate('items')
-  .populate('lists');
-
-  paginate(req, query).exec().then(lists => {
+// Item CRUD routes
+router.get('/items', (req, res) => {
+  let query = Item.find({}).select('-__v');
+  return paginate(req, query)
+  .exec().then(items => {
     res.status(200).send({
       status: 'ok',
-      data: lists,
+      data: items,
     });
   });
 });
-router.get('/lists/:listId', (req, res) => {
-  List
+router.get('/items/:listId', (req, res) => {
+  return Item
   .findOne({_id: req.params.listId})
   .select('-__v')
-  .populate('items')
-  .populate('lists')
 
   .exec()
   .then(list => {
@@ -65,46 +59,46 @@ router.get('/lists/:listId', (req, res) => {
     } else {
       res.status(404).send({
         status: 'ok',
-        msg: 'No such list.',
+        msg: 'No such item.',
         code: 'net.rgaus.lunchbox.no_such_list',
       });
     }
   });
 })
-router.post('/lists', (req, res) => {
-  let list = new List(req.body);
+router.post('/items', (req, res) => {
+  let item = new Item(req.body);
 
-  list.save()
+  return item.save()
   .then(lists => {
     res.status(201).send({status: 'ok', id: lists._id});
   });
 })
-router.put('/lists/:listId', (req, res) => {
-  List
-  .update({_id: req.params.listId}, req.body)
+router.put('/items/:itemId', (req, res) => {
+  return Item
+  .update({_id: req.params.itemId}, req.body)
   .exec()
-  .then(list => {
+  .then(item => {
     res.status(200).send({
       status: 'ok',
       nmodified: list.nModified,
     });
   });
 });
-router.delete('/lists/:listId', (req, res) => {
-  List
-  .remove({_id: req.params.listId})
+router.delete('/items/:itemId', (req, res) => {
+  return Item
+  .remove({_id: req.params.itemId})
   .exec()
-  .then(list => {
+  .then(item => {
     res.status(200).send({
       status: 'ok',
-      nmodified: list.nModified,
+      nmodified: item.nModified,
     });
   });
 });
 
 // Get a reference to either the pantry or the grocery list
 router.get('/lists/pantry', (req, res) => {
-  List
+  return Item
   .findOne({listType: 'pantry', type: 'list'})
   .select('-__v')
   .exec()
@@ -119,9 +113,9 @@ router.get('/lists/pantry', (req, res) => {
       });
     }
   });
-})
+});
 router.get('/lists/grocery', (req, res) => {
-  List
+  return Item
   .findOne({listType: 'grocery', type: 'list'})
   .select('-__v')
   .exec()
@@ -136,20 +130,21 @@ router.get('/lists/grocery', (req, res) => {
       });
     }
   });
-})
+});
 
 // add an item to a list
 router.post('/lists/:listId/contents', (req, res) => {
   // body = {item: 'itemid here', quantity: '1 cup'}
 
-  return List.findOne({_id: req.body.item}).exec().then(list => {
+  return Item.findOne({_id: req.body.item}).exec().then(list => {
     if (list === null) {
       return res.status(404).send({error: "No such list to add items into."});
     }
 
-    return List
+    return Item
     .update({
-      _id: req.params.listId
+      _id: req.params.listId,
+      type: 'list',
     }, {
       $push: {
         contents: Object.assign({}, list.toObject(), {
@@ -165,11 +160,19 @@ router.post('/lists/:listId/contents', (req, res) => {
 
 // remove items from list
 router.delete('/lists/:listId/contents/:itemId', (req, res) => {
-  return List
-  .update({_id: req.params.listId}, {
+  return Item
+  .update({_id: req.params.listId, type: 'list'}, {
     $pull: {contents: {_id: new mongoose.Types.ObjectId(req.params.itemId)}}
-  }).exec().then(item => {
-    res.status(201).send({status: 'ok'});
+  }).exec().then(({nModified}) => {
+    if (nModified > 0) {
+      res.status(200).send({status: 'ok'});
+    } else {
+      res.status(404).send({
+        status: 'err',
+        msg: 'No matching items in the specified list.',
+        code: 'net.rgaus.lunchbox.no_search_query',
+      });
+    }
   });
 });
 
@@ -179,7 +182,7 @@ router.get('/calc', (req, res) => {
   // - Convert the `item` and `lists` keys into one `contents` key. This
   // involves injecting a `type` into each list or item. (this is done
   // recuresively!)
-  // function traverseList(depth, level) {
+  // function traverseItem(depth, level) {
   //   if (depth > 50) {
   //     throw new Error('Either lists are nested really deeply, or there is a list inside of itself.');
   //   }
@@ -192,13 +195,13 @@ router.get('/calc', (req, res) => {
   //     })),
   //     // expand all lists in the passed list
   //     Promise.all(level.lists.map(list => {
-  //       return List.findOne({_id: list}).exec()
+  //       return Item.findOne({_id: list}).exec()
   //     })),
   //   ]).then(([items, lists]) => {
   //     // then, recursively resolve each list's contents
   //     return Promise.all(
-  //       lists.map(traverseList.bind(null, ++depth))
-  //     ).then(resolvedLists => {
+  //       lists.map(traverseItem.bind(null, ++depth))
+  //     ).then(resolvedItems => {
   //       // remove items/lists, and add contents
   //       return Object.assign({}, level.toObject(), {
   //         items: undefined,
@@ -207,7 +210,7 @@ router.get('/calc', (req, res) => {
   //           ...items.map(i => {
   //             return Object.assign({}, i.toObject(), {type: 'item', store: {type: 'cheapest'}});
   //           }),
-  //           ...resolvedLists.map(i => {
+  //           ...resolvedItems.map(i => {
   //             return Object.assign({}, i, {type: 'list'});
   //           }),
   //         ],
@@ -217,17 +220,17 @@ router.get('/calc', (req, res) => {
   // }
 
   // get the pantry and grocery list
-  return List.findOne({listType: 'pantry'}).exec().then(pantry => {
-    return List.findOne({listType: 'grocery'}).exec().then(list => {
+  return Item.findOne({listType: 'pantry'}).exec().then(pantry => {
+    return Item.findOne({listType: 'grocery'}).exec().then(list => {
       // convert to a better format
       if (!list) {
         res.status(404).send({error: "No such list with that id!"});
       }
 
-      // first, expand the schema using `traverseList` above
-      // traverseList(0, list).then(expandedList => {
-      let flattenedGroceryList = priceify.flattenList(list);
-      let itemsToBuy = priceify.removePantryItemsFromList(flattenedGroceryList, pantry.contents);
+      // first, expand the schema using `traverseItem` above
+      // traverseItem(0, list).then(expandedItem => {
+      let flattenedGroceryItem = priceify.flattenItem(list);
+      let itemsToBuy = priceify.removePantryItemsFromItem(flattenedGroceryItem, pantry.contents);
       res.send(itemsToBuy.map(item => {
         return {item, price: stores.getItemPrice(item.name, item.quantity, {type: "cheapest"})};
       }));
