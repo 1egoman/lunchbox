@@ -12,6 +12,8 @@ import mongoose from 'mongoose';
 mongoose.Promise = Promise;
 mongoose.connect(process.env.MONGODB_URI)
 
+import Item from 'models/item';
+
 var app = express();
 
 // view engine setup
@@ -45,7 +47,7 @@ app.use('/v1', (req, res, next) => {
       code: 'net.rgaus.lunchbox.unauthorized'
     });
   }
-}, api);
+}, api(Item));
 
 app.use('/', index);
 

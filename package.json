@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "NODE_PATH=src/ node ./bin/www",
-    "test": "mocha store-algo/test/*.js"
+    "store-test": "mocha store-algo/test/*.js",
+    "test": "mocha test/"
   },
   "dependencies": {
     "accounting": "^0.4.1",
@@ -23,6 +24,10 @@
     "unitz": "1egoman/unitz"
   },
   "devDependencies": {
-    "mocha": "^3.1.2"
+    "mocha": "^3.1.2",
+    "sinon": "^1.17.6",
+    "sinon-as-promised": "^4.0.2",
+    "superagent": "^2.3.0",
+    "supertest": "^2.0.1"
   }
 }
