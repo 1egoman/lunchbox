@@ -1,5 +1,4 @@
 import express from 'express';
-var router = express.Router();
 
 import mongoose from 'mongoose';
 export const PAGE_LENGTH = 20;
@@ -18,6 +17,8 @@ function paginate(req, query) {
 }
 
 export default function constructRouter(Item) {
+  let router = express.Router();
+
   // Search through item names
   // GET /item/search=Search+Query
   router.get('/items/search', (req, res) => {
@@ -51,7 +52,6 @@ export default function constructRouter(Item) {
     });
   });
   router.get('/items/:listId', (req, res) => {
-    console.log(123, Object.keys(Item))
     return Item
     .findOne({_id: req.params.listId})
     .select('-__v')

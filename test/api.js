@@ -43,7 +43,7 @@ function routerToServer(router) {
 }
 
 describe('api router', function() {
-  it.skip('should get all items/lists', function(done) {
+  it('should get all items/lists', function(done) {
     let itemArray = [mockItem(), mockItem(), mockItem()];
 
     // Mock out the model
