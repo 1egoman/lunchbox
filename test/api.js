@@ -6,9 +6,16 @@ const sinon = require('sinon');
 import {v4 as uuid} from 'uuid';
 import faker from 'faker';
 
+// just for the mongoose.Types.ObjectId constructor
+import mongoose from 'mongoose';
+
+function generateId() {
+  return uuid().replace(/-/g, '').slice(0, 24);
+}
+
 function mockItem() {
   return {
-    _id: uuid(),
+    _id: generateId(),
     name: faker.internet.userName(),
     type: 'item',
     quantity: '1 cup',
@@ -24,7 +31,7 @@ function mockList({listType}) {
   }
 
   return {
-    _id: uuid(),
+    _id: generateId(),
     type: 'list',
     name: faker.internet.userName(),
     listType: listType || 'recipe',
@@ -197,5 +204,86 @@ describe('api router', function() {
     .post(`/v1/lists/${list._id}/contents`)
     .send({item: item._id, quantity: '1 cup'})
     .expect(201, JSON.stringify({status: 'ok'}), done);
+  });
+  it(`should fail to add an item that doesn't exist to a list`, function(done) {
+    let list = mockList({listType: 'recipe'});
+    let item = mockItem();
+    item.toObject = () => item; // a stupid mongoose mock thing
+
+    // Mock out the model
+    let model = {};
+    let findOneExec = sinon.stub().withArgs().resolves(null); // no item found!
+    model.findOne = sinon.stub().withArgs({_id: item._id}).returns({exec: findOneExec});
+
+    // Create the roter with the specified model
+    let router = constructRouter(model);
+
+    supertest(routerToServer(router))
+    .post(`/v1/lists/${list._id}/contents`)
+    .send({item: item._id, quantity: '1 cup'})
+    .expect(404, JSON.stringify({
+        status: 'err',
+        msg: "No such item to add to the list. Try another item?",
+        code: 'net.rgaus.lunchbox.item_no_exist',
+    }), done);
+  });
+
+  it(`should delete an item from a list`, function(done) {
+    let list = mockList({listType: 'recipe'});
+    let item = mockItem();
+    item.toObject = () => item; // a stupid mongoose mock thing
+
+    // Mock out the model
+    let model = {};
+    let findOneExec = sinon.stub().withArgs().resolves({nModified: 1}); // response!
+    model.update = sinon.stub().withArgs({
+      _id: list._id, type: 'list',
+    }, {
+      $pull: {
+        contents: {
+          _id: new mongoose.Types.ObjectId(item._id),
+        },
+      },
+    }).returns({exec: findOneExec});
+
+    // Create the roter with the specified model
+    let router = constructRouter(model);
+
+    supertest(routerToServer(router))
+    .delete(`/v1/lists/${list._id}/contents/${item._id}`)
+    .send({item: item._id, quantity: '1 cup'})
+    .expect(JSON.stringify({
+      status: 'ok',
+    }), done);
+  });
+  it(`should fail to delete an item when that item id idn't in the list`, function(done) {
+    let list = mockList({listType: 'recipe'});
+    let item = mockItem();
+    item.toObject = () => item; // a stupid mongoose mock thing
+
+    // Mock out the model
+    let model = {};
+    let findOneExec = sinon.stub().withArgs().resolves({nModified: 0}); // couldn't perform the action
+    model.update = sinon.stub().withArgs({
+      _id: list._id, type: 'list',
+    }, {
+      $pull: {
+        contents: {
+          _id: new mongoose.Types.ObjectId(item._id),
+        },
+      },
+    }).returns({exec: findOneExec});
+
+    // Create the roter with the specified model
+    let router = constructRouter(model);
+
+    supertest(routerToServer(router))
+    .delete(`/v1/lists/${list._id}/contents/${item._id}`)
+    .send({item: item._id, quantity: '1 cup'})
+    .expect(JSON.stringify({
+      status: 'err',
+      msg: 'No matching items in the specified list.',
+      code: 'net.rgaus.lunchbox.no_items_in_list',
+    }), done);
   });
 });

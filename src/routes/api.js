@@ -142,7 +142,12 @@ export default function constructRouter(Item) {
 
     return Item.findOne({_id: req.body.item}).exec().then(list => {
       if (list === null) {
-        return res.status(404).send({error: "No such list to add items into."});
+        res.status(404).send({
+          status: 'err',
+          msg: "No such item to add to the list. Try another item?",
+          code: 'net.rgaus.lunchbox.item_no_exist',
+        });
+        return
       }
 
       return Item
@@ -156,9 +161,9 @@ export default function constructRouter(Item) {
             quantity: req.body.quantity,
           }),
         },
-      }).exec();
-    }).then(item => {
-      res.status(201).send({status: 'ok'});
+      }).exec().then(item => {
+        res.status(201).send({status: 'ok'});
+      });
     })
     .catch(err => console.error(err))
   });
@@ -175,10 +180,11 @@ export default function constructRouter(Item) {
         res.status(404).send({
           status: 'err',
           msg: 'No matching items in the specified list.',
-          code: 'net.rgaus.lunchbox.no_search_query',
+          code: 'net.rgaus.lunchbox.no_items_in_list',
         });
       }
-    });
+    })
+    .catch(err => console.error(err))
   });
 
   router.get('/calc', (req, res) => {
