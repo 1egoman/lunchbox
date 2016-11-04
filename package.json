@@ -5,7 +5,8 @@
   "scripts": {
     "start": "NODE_PATH=src/ node ./bin/www",
     "store-test": "mocha store-algo/test/*.js",
-    "test": "mocha test/"
+    "test": "NODE_ENV=test mocha test/",
+    "coverage": "nyc --require babel-register --reporter=lcov --reporter=text npm test"
   },
   "dependencies": {
     "accounting": "^0.4.1",
@@ -27,6 +28,7 @@
   "devDependencies": {
     "faker": "^3.1.0",
     "mocha": "^3.1.2",
+    "nyc": "^8.4.0",
     "sinon": "^1.17.6",
     "sinon-as-promised": "^4.0.2",
     "superagent": "^2.3.0",

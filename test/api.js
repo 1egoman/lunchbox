@@ -25,8 +25,8 @@ function mockList({listType}) {
 
   return {
     _id: uuid(),
-    type,
-    name: "Sample item",
+    type: 'list',
+    name: faker.internet.userName(),
     listType: listType || 'recipe',
     contents,
     tags: [],
@@ -37,12 +37,14 @@ function mockList({listType}) {
 function routerToServer(router) {
   const express = require('express');
   let app = express();
+  app.use(require('body-parser').json());
   app.use('/v1', router);
 
   return app;
 }
 
 describe('api router', function() {
+  // GET /items
   it('should get all items/lists', function(done) {
     let itemArray = [mockItem(), mockItem(), mockItem()];
 
@@ -61,11 +63,13 @@ describe('api router', function() {
 
     supertest(routerToServer(router))
     .get('/v1/items?page=0')
-    .expect(JSON.stringify({
+    .expect(200, JSON.stringify({
       status: 'ok',
       data: itemArray,
     }), done)
   });
+
+  // GET /items/:id
   it('should get one item/list', function(done) {
     let item = mockItem();
 
@@ -80,6 +84,118 @@ describe('api router', function() {
 
     supertest(routerToServer(router))
     .get(`/v1/items/${item._id}`)
-    .expect(JSON.stringify(item), done)
+    .expect(200, JSON.stringify(item), done)
+  });
+  it(`should not get one item/list when it doesn't exist`, function(done) {
+    // Mock out the model
+    let model = {};
+    model.findOne = sinon.stub().withArgs({_id: "foo"}).returns(model);
+    model.select = sinon.stub().withArgs('-__v').returns(model);
+    model.exec = sinon.stub().withArgs().resolves(null); // response!
+
+    // Create the roter with the specified model
+    let router = constructRouter(model);
+
+    supertest(routerToServer(router))
+    .get(`/v1/items/foo`) // foo isn't an item id
+    .expect(404, JSON.stringify({
+      status: 'ok',
+      msg: 'No such item.',
+      code: 'net.rgaus.lunchbox.no_such_list',
+    }), done)
+  });
+
+  // POST /items
+  it(`should create a new item`, function(done) {
+    let item = mockItem();
+
+    // Mock out the model methods
+    let methods = {};
+    methods.save = sinon.stub().withArgs().resolves(item); // response!
+
+    // Add methods to the model
+    let model = sinon.stub().returns(methods);
+
+    // Create the roter with the specified model
+    let router = constructRouter(model);
+
+    supertest(routerToServer(router))
+    .post(`/v1/items`) // foo isn't an item id
+    .send(item)
+    .expect(201, JSON.stringify({
+      status: 'ok',
+      id: item._id,
+    }), done);
+  });
+
+  // PUT /items/:id
+  it(`should update an item`, function(done) {
+    let item = mockItem();
+    let changeset = {foo: 'bar'};
+
+    // Mock out the model
+    let model = {};
+    model.update = sinon.stub().withArgs({_id: item._id}, changeset).returns(model);
+    model.exec = sinon.stub().withArgs().resolves({nModified: 1}); // success response!
+
+    // Create the roter with the specified model
+    let router = constructRouter(model);
+
+    supertest(routerToServer(router))
+    .put(`/v1/items/${item._id}`)
+    .send(changeset)
+    .expect(JSON.stringify({
+      status: 'ok',
+      nmodified: 1,
+    }), done);
+  });
+
+  // DELETE /items/:id
+  // FIXME: Why is the response body empty?
+  it.skip(`should remove an item`, function(done) {
+    let item = mockItem();
+
+    // Mock out the model
+    let model = {};
+    model.remove = sinon.stub().withArgs({_id: item._id}).returns(model);
+    model.exec = sinon.stub().withArgs().resolves({nModified: 1}); // success response!
+
+    // Create the roter with the specified model
+    let router = constructRouter(model);
+
+    supertest(routerToServer(router))
+    .delete(`/v1/items/${item._id}`)
+    .expect(JSON.stringify({
+      status: 'ok',
+      nmodified: 1,
+    }), done);
+  });
+
+  it(`should add an item to a list`, function(done) {
+    let list = mockList({listType: 'recipe'});
+    let item = mockItem();
+    item.toObject = () => item; // a stupid mongoose mock thing
+
+    // Mock out the model
+    let model = {};
+    let findOneExec = sinon.stub().withArgs().resolves(item);
+    model.findOne = sinon.stub().withArgs({_id: item._id}).returns({exec: findOneExec});
+    let updateExec = sinon.stub().withArgs().resolves({nModified: 1}); // success response!
+    model.update = sinon.stub().withArgs({
+      _id: list._id,
+      type: 'list',
+    }, {
+      $push: {
+        contents: Object.assign({}, item, {quantity: '1 cup'}),
+      },
+    }).returns({exec: updateExec});
+
+    // Create the roter with the specified model
+    let router = constructRouter(model);
+
+    supertest(routerToServer(router))
+    .post(`/v1/lists/${list._id}/contents`)
+    .send({item: item._id, quantity: '1 cup'})
+    .expect(201, JSON.stringify({status: 'ok'}), done);
   });
 });

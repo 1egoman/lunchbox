@@ -84,7 +84,7 @@ export default function constructRouter(Item) {
     .then(item => {
       res.status(200).send({
         status: 'ok',
-        nmodified: list.nModified,
+        nmodified: item.nModified,
       });
     });
   });
@@ -93,7 +93,7 @@ export default function constructRouter(Item) {
     .remove({_id: req.params.itemId})
     .exec()
     .then(item => {
-      res.status(200).send({
+      res.status(204).send({
         status: 'ok',
         nmodified: item.nModified,
       });
@@ -159,7 +159,8 @@ export default function constructRouter(Item) {
       }).exec();
     }).then(item => {
       res.status(201).send({status: 'ok'});
-    });
+    })
+    .catch(err => console.error(err))
   });
 
   // remove items from list
