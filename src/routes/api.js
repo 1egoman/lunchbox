@@ -3,12 +3,6 @@ import express from 'express';
 import mongoose from 'mongoose';
 export const PAGE_LENGTH = 20;
 
-import {
-  flattenList,
-  removePantryItemsFromList,
-} from '../../store-algo/priceify';
-import {getItemPrice} from '../../store-algo/stores';
-
 function paginate(req, query) {
   let page = req.query.page || req.body.page || 0;
   return query
@@ -16,7 +10,10 @@ function paginate(req, query) {
     .limit(PAGE_LENGTH);
 }
 
-export default function constructRouter(Item) {
+export default function constructRouter(Item, storeAlgoMethods) {
+  // Pull out all store algorithm methods
+  let {flattenList, removePantryItemsFromList, getItemPrice} = (storeAlgoMethods || {});
+
   let router = express.Router();
 
   // Search through item names

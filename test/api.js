@@ -286,4 +286,55 @@ describe('api router', function() {
       code: 'net.rgaus.lunchbox.no_items_in_list',
     }), done);
   });
+
+  it(`should calculate all the given items for a list`, function(done) {
+    let pantry = mockList({listType: 'pantry'});
+    let grocery = mockList({listType: 'grocery'});
+    let list = mockList({listType: 'recipe'});
+
+    let item = mockItem();
+    item.toObject = () => item; // a stupid mongoose mock thing
+
+    // Mock out the model
+    let model = {};
+    model.findOne = sinon.stub();
+    let pantryExec = sinon.stub().resolves(pantry);
+    model.findOne.withArgs({listType: 'pantry'}).returns({exec: pantryExec});
+    let groceryExec = sinon.stub().resolves(grocery);
+    model.findOne.withArgs({listType: 'grocery'}).returns({exec: groceryExec});
+
+    // mock out the store-algo functions
+    // "flattenList"
+    // "itemsToBuy"
+    // "getItemPrice"
+
+    let storeAlgoMethods = {
+      flattenList: sinon.stub().withArgs(list).returns([1, 2, 3]),
+      removePantryItemsFromList: sinon.stub().withArgs([1, 2, 3], pantry.contents).returns([4, 5, 6]),
+      getItemPrice: sinon.stub().withArgs([4, 5, 6]).returns("item price data"),
+    };
+
+    // Create the roter with the specified model
+    let router = constructRouter(
+      model,
+      storeAlgoMethods
+    );
+
+    supertest(routerToServer(router))
+    .get(`/v1/calc`)
+    .expect(JSON.stringify([
+      {
+        item: 4,
+        price: "item price data",
+      },
+      {
+        item: 5,
+        price: "item price data",
+      },
+      {
+        item: 6,
+        price: "item price data",
+      },
+    ]), done);
+  });
 });

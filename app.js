@@ -12,6 +12,13 @@ import mongoose from 'mongoose';
 mongoose.Promise = Promise;
 mongoose.connect(process.env.MONGODB_URI)
 
+import {
+  flattenList,
+  removePantryItemsFromList,
+} from './store-algo/priceify';
+import {getItemPrice} from './store-algo/stores';
+
+
 import Item from 'models/item';
 
 var app = express();
@@ -47,7 +54,7 @@ app.use('/v1', (req, res, next) => {
       code: 'net.rgaus.lunchbox.unauthorized'
     });
   }
-}, api(Item));
+}, api(Item, {flattenList, removePantryItemsFromList, getItemPrice}));
 
 app.use('/', index);
 
