@@ -3,3 +3,6 @@
 name=lunchbox
 MONGODB_URI=
 SECRET_KEY=
+
+IMAGE_RESIZE_TO=54
+IMAGE_PATH=images/

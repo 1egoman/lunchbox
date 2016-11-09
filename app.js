@@ -5,6 +5,7 @@ import logger from 'morgan';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import Promise from 'bluebird';
+import cors from 'express-cors';
 
 import api from 'routes/api';
 import index from 'routes/index';
@@ -35,25 +36,34 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// disable cors while in development
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, HEAD");
+  next();
+});
+
 /* GET home page. */
 app.get('/', (req, res, next) => {
   res.render('index', {title: 'Lunchbox: food management'});
 });
 
 app.use('/v1', (req, res, next) => {
-  // Protect routes
+  // Preflight CORS does OPTIONS request without headers. Let's not require Authorization then
   if (
+    req.method !== 'OPTIONS' && 
+    // Protect routes
     req.headers.authorization &&
     req.headers.authorization === `Bearer ${process.env.SECRET_KEY}`
   ) {
-    next();
-  } else {
     res.status(401).send({
       status: 'err',
       msg: 'Unauthorized',
       code: 'net.rgaus.lunchbox.unauthorized'
     });
   }
+  return next();
 }, api(Item, {flattenList, removePantryItemsFromList, getItemPrice}));
 
 app.use('/', index);
