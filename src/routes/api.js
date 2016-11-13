@@ -8,6 +8,7 @@ import Busboy from 'busboy';
 import path from 'path';
 import sharp from 'sharp';
 import {v4 as uuid} from 'uuid';
+import mkdirp from 'mkdirp';
 
 function paginate(req, query) {
   let page = req.query.page || req.body.page || 0;
@@ -22,9 +23,18 @@ export default function constructRouter(Item, storeAlgoMethods) {
 
   let router = express.Router();
 
-  // Post a new image to an item.
+  // Create a new directory for images to live in
   const imageSize = parseInt(process.env.IMAGE_RESIZE_TO) || 54;
   const imagePath = process.env.IMAGE_PATH || 'images/';
+  mkdirp(process.env.IMAGE_PATH, err => {
+    if (err) {
+      console.error(`Couldn't make directory ${process.env.IMAGE_PATH}: ${err}`);
+    } else {
+      console.log(`Created ${process.env.IMAGE_PATH}!`);
+    }
+  });
+
+  // Post a new image to an item.
   router.post('/items/:id/image', (req, res) => {
     let imageLocation = path.join(imagePath, `${req.params.id}.png`);
 
