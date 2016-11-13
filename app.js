@@ -51,13 +51,17 @@ app.get('/', (req, res, next) => {
 
 app.use('/v1', (req, res, next) => {
   // Preflight CORS does OPTIONS request without headers. Let's not require Authorization then
-  if (
-    req.method !== 'OPTIONS' && 
-    // Protect routes
-    req.headers.authorization &&
-    req.headers.authorization === `Bearer ${process.env.SECRET_KEY}`
-  ) {
-    res.status(401).send({
+  if (!req.query.token) {
+    return res.status(401).send({
+      status: 'err',
+      msg: 'Unauthorized, please specifiy and Authorization header',
+      code: 'net.rgaus.lunchbox.unauthorized_noheader'
+    });
+  }
+
+  // Protect routes
+  if (req.query.token !== process.env.SECRET_KEY) {
+    return res.status(401).send({
       status: 'err',
       msg: 'Unauthorized',
       code: 'net.rgaus.lunchbox.unauthorized'
