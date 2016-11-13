@@ -240,64 +240,23 @@ export default function constructRouter(Item, storeAlgoMethods) {
   });
 
   router.get('/calc', (req, res) => {
-    // Given a list item fetched from the mongo database, do a few things:
-    // - convert the mongo output to a object (with list.toObject)
-    // - Convert the `item` and `lists` keys into one `contents` key. This
-    // involves injecting a `type` into each list or item. (this is done
-    // recuresively!)
-    // function traverseItem(depth, level) {
-    //   if (depth > 50) {
-    //     throw new Error('Either lists are nested really deeply, or there is a list inside of itself.');
-    //   }
-    //
-    //   // first, resolve all the items
-    //   return Promise.all([
-    //     // expand all items in the passed list
-    //     Promise.all(level.items.map(item => {
-    //       return Item.findOne({_id: item}).exec()
-    //     })),
-    //     // expand all lists in the passed list
-    //     Promise.all(level.lists.map(list => {
-    //       return Item.findOne({_id: list}).exec()
-    //     })),
-    //   ]).then(([items, lists]) => {
-    //     // then, recursively resolve each list's contents
-    //     return Promise.all(
-    //       lists.map(traverseItem.bind(null, ++depth))
-    //     ).then(resolvedItems => {
-    //       // remove items/lists, and add contents
-    //       return Object.assign({}, level.toObject(), {
-    //         items: undefined,
-    //         lists: undefined,
-    //         contents: [
-    //           ...items.map(i => {
-    //             return Object.assign({}, i.toObject(), {type: 'item', store: {type: 'cheapest'}});
-    //           }),
-    //           ...resolvedItems.map(i => {
-    //             return Object.assign({}, i, {type: 'list'});
-    //           }),
-    //         ],
-    //       })
-    //     });
-    //   });
-    // }
-
     // get the pantry and grocery list
     return Item.findOne({listType: 'pantry'}).exec().then(pantry => {
       return Item.findOne({listType: 'grocery'}).exec().then(list => {
         // convert to a better format
         if (!list) {
-          res.status(404).send({error: "No such list with that id!"});
+          res.status(404).send({
+            status: 'err',
+            msg: 'No lists of grocery list type.',
+            code: 'net.rgaus.lunchbox.no_grocery_list',
+          });
         }
 
-        // first, expand the schema using `traverseItem` above
-        // traverseItem(0, list).then(expandedItem => {
         let flattenedGroceryItem = flattenList(list);
         let itemsToBuy = removePantryItemsFromList(flattenedGroceryItem, pantry.contents);
         res.send(itemsToBuy.map(item => {
           return {item, price: getItemPrice(item.name, item.quantity, {type: "cheapest"})};
         }));
-        // }).catch(e => console.error(e.stack) && res.send('error'))
       });
     });
   });

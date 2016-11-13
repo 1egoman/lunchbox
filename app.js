@@ -54,7 +54,7 @@ app.use('/v1', (req, res, next) => {
   if (!req.query.token) {
     return res.status(401).send({
       status: 'err',
-      msg: 'Unauthorized, please specifiy and Authorization header',
+      msg: 'Unauthorized, please specifiy a token',
       code: 'net.rgaus.lunchbox.unauthorized_noheader'
     });
   }
