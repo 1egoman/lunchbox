@@ -3,12 +3,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 export const PAGE_LENGTH = 20;
 
-import fs from 'fs';
 import Busboy from 'busboy';
 import path from 'path';
 import sharp from 'sharp';
 import {v4 as uuid} from 'uuid';
-import mkdirp from 'mkdirp';
+
+import Grid from 'gridfs-stream';
+Grid.mongo = mongoose.mongo;
 
 function paginate(req, query) {
   let page = req.query.page || req.body.page || 0;
@@ -23,31 +24,28 @@ export default function constructRouter(Item, storeAlgoMethods) {
 
   let router = express.Router();
 
-  // Create a new directory for images to live in
+  // Post a new image to an item.
   const imageSize = parseInt(process.env.IMAGE_RESIZE_TO) || 54;
   const imagePath = process.env.IMAGE_PATH || 'images/';
-  mkdirp(imagePath, err => {
-    if (err) {
-      console.error(`Couldn't make directory ${imagePath}: ${err}`);
-    } else {
-      console.log(`Created ${imagePath}!`);
-    }
-  });
-
-  // Post a new image to an item.
   router.post('/items/:id/image', (req, res) => {
     let imageLocation = path.join(imagePath, `${req.params.id}.png`);
 
     let busboy = new Busboy({headers: req.headers});
     busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+      // Create a new gridfs connection
+      let gfs = Grid(mongoose.connection.db);
       if (fieldname === 'image') {
         let imageResizer = sharp().resize(imageSize, imageSize).png();
 
-        file
-        // Resize the image to be 54x54, and convert to png
-        .pipe(imageResizer)
-        // Save to the filesystem
-        .pipe(fs.createWriteStream(imageLocation));
+        gfs.remove({filename: imageLocation}, err => {
+          file
+          // Resize the image to be 54x54, and convert to png
+          .pipe(imageResizer)
+          // Save to the filesystem
+          // .pipe(fs.createWriteStream(imageLocation));
+          // Save to GridFs
+          .pipe(gfs.createWriteStream({filename: imageLocation}));
+        });
       } else {
         res.status(403).send({
           status: 'err',
@@ -57,7 +55,7 @@ export default function constructRouter(Item, storeAlgoMethods) {
       }
     });
     busboy.on('finish', () => {
-      // Once it's saved, add the path to the item model
+      // Once it's saved, report success!
       res.status(201).send({
         status: 'ok',
         path: `/v1/items/${req.params.id}/image`,
@@ -71,13 +69,14 @@ export default function constructRouter(Item, storeAlgoMethods) {
       let imageLocation = path.join(imagePath, `${item._id}.png`);
 
       // Is there an image at the specified image path?
-      fs.access(imageLocation, fs.F_OK, err => {
-        if (err) {
+      let gfs = Grid(mongoose.connection.db);
+      gfs.exist({filename: imageLocation}, (err, found) => {
+        if (err || !found) {
           res.status(204).send();
         } else {
-          fs.createReadStream(imageLocation).pipe(res);
+          gfs.createReadStream({filename: imageLocation}).pipe(res);
         }
-      })
+      });
     });
   });
 
