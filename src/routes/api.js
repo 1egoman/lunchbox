@@ -26,11 +26,11 @@ export default function constructRouter(Item, storeAlgoMethods) {
   // Create a new directory for images to live in
   const imageSize = parseInt(process.env.IMAGE_RESIZE_TO) || 54;
   const imagePath = process.env.IMAGE_PATH || 'images/';
-  mkdirp(process.env.IMAGE_PATH, err => {
+  mkdirp(imagePath, err => {
     if (err) {
-      console.error(`Couldn't make directory ${process.env.IMAGE_PATH}: ${err}`);
+      console.error(`Couldn't make directory ${imagePath}: ${err}`);
     } else {
-      console.log(`Created ${process.env.IMAGE_PATH}!`);
+      console.log(`Created ${imagePath}!`);
     }
   });
 
