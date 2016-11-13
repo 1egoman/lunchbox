@@ -50,7 +50,7 @@ app.get('/', (req, res, next) => {
 });
 
 app.use('/v1', (req, res, next) => {
-  // Preflight CORS does OPTIONS request without headers. Let's not require Authorization then
+  // Make sure a token was passed
   if (!req.query.token) {
     return res.status(401).send({
       status: 'err',
@@ -59,7 +59,7 @@ app.use('/v1', (req, res, next) => {
     });
   }
 
-  // Protect routes
+  // Make sure the token looks good
   if (req.query.token !== process.env.SECRET_KEY) {
     return res.status(401).send({
       status: 'err',
