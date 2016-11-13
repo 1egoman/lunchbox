@@ -1,7 +1,7 @@
 import express from 'express';
 
 import mongoose from 'mongoose';
-export const PAGE_LENGTH = process.env.PATGE_LENGTH || 20;
+export const PAGE_LENGTH = process.env.PAGE_LENGTH || 20;
 
 import Busboy from 'busboy';
 import path from 'path';
