@@ -102,53 +102,13 @@ export default function constructRouter(Item, storeAlgoMethods) {
 
 
   // Item CRUD routes
-
-  // Get an item.
-  // THere's some fancyness going on here. Because items are stored within lists
-  // "by value" (because stuff like quantity needs to be added), if a change
-  // happens on the parent item, that won't be reflected in any children.
-  // Therefore, to get the "by reference" while still storeing "by value", each
-  // item in a list's item' document is fetched. Then, an Object.assign is done
-  // so that any unset properties in the list item "inherit" from the full item
-  // document. THe Benefit of this is that schema changes don't require costly
-  // recursive migrations, and we only have to migrate on a document-by-document
-  // basis instead of having to recursively dive into each list's `contents`.
-  function doInherit(item) {
-    return (function() {
-      if (item.contents) {
-        // Get the base items.
-        return Promise.all(item.contents.map(item => {
-          return Item.findOne({_id: item._id}).exec();
-        })).then((baseItems, ct) => {
-          return baseItems.map(baseItem => {
-            // Each list item inherits from each base item
-            return Object.assign({}, baseItem, item.contents[ct]);
-          });
-        });
-      } else {
-        return Promise.resolve(item.contents);
-      }
-    })().then(() => {
-      return Object.assign(5)
-    });
-  }
   router.get('/items', (req, res) => {
     let query = Item.find({}).select('-__v');
-    let items;
     return paginate(req, query)
-    .exec().then(itemValues => {
-      // Get the base items.
-      items = itemValues;
-      return Promise.all(items.map(item => {
-        return Item.findOne({_id: item._id}).exec();
-      }));
-    }).then(baseItems => {
+    .exec().then(items => {
       res.status(200).send({
         status: 'ok',
-        data: items.map((item, ct) => {
-          // Inherit from base items
-          return Object.assign({}, baseItems[ct].toObject(), item.toObject());
-        }),
+        data: items,
       });
     });
   });
