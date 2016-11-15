@@ -211,6 +211,23 @@ export default function constructRouter(Item, storeAlgoMethods) {
         return
       }
 
+      // verify the specified quantity is allowed
+      // TODO: make unit `volume` and `mass` work too
+      if (list.requireQuantityIn && list.requireQuantityIn.unit === 'custom') {
+        let endsInCustomQuantity = list.requireQuantityIn.customChoices.find(end => {
+          return req.body.quantity.endsWith(end);
+        });
+
+        if (!endsInCustomQuantity) {
+          return res.status(400).send({
+            status: 'err',
+            msg: `The given item doesn't end in one of the permitted quantities. It must end in ${list.requireQuantityIn.customChoices.join(' or ')}`,
+            code: 'net.rgaus.lunchbox.quantity_not_permitted',
+          });
+        }
+      }
+
+      // Once all checks are passed, add the item to the list.
       return Item
       .update({
         _id: req.params.listId,

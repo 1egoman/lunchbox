@@ -12,7 +12,12 @@ const schema = new mongoose.Schema({
 
   // item only
   quantity: 'string',
-  requireQuantityIn: ['string'], // a required quantity unit, eg. loaf or tortilla
+  // a required quantity unit, eg. loaf or tortilla
+  requireQuantityIn: {
+    type: 'object',
+    unit: 'string', // 'all', 'mass', 'volume', 'custom' (all is default)
+    customChoices: ['string'], // for custom type, pick some choices
+  },
 });
 
 // Add full-text search on the name
