@@ -227,6 +227,41 @@ describe('api router', function() {
         code: 'net.rgaus.lunchbox.item_no_exist',
     }), done);
   });
+  it(`should fail to add a new item to a list with an unpermitted unit`, function(done) {
+    let item = Object.assign({}, mockItem(), {
+      requireQuantityIn: {
+        unit: 'custom', customChoices: ['foo'],
+      },
+    });
+    let list = mockList({listType: 'recipe'});
+    item.toObject = () => item; // a stupid mongoose mock thing
+
+    // Mock out the model
+    let model = {};
+    let findOneExec = sinon.stub().withArgs().resolves(item);
+    model.findOne = sinon.stub().withArgs({_id: item._id}).returns({exec: findOneExec});
+    let updateExec = sinon.stub().withArgs().resolves({nModified: 1}); // success response!
+    model.update = sinon.stub().withArgs({
+      _id: list._id,
+      type: 'list',
+    }, {
+      $push: {
+        contents: Object.assign({}, item, {quantity: '1 cup'}),
+      },
+    }).returns({exec: updateExec});
+
+    // Create the roter with the specified model
+    let router = constructRouter(model);
+
+    supertest(routerToServer(router))
+    .post(`/v1/lists/${list._id}/contents`)
+    .send({item: item._id, quantity: '1 cup'})
+    .expect(400, JSON.stringify({
+      status: 'err',
+      msg: `The given item doesn't end in one of the permitted quantities. It must end in foo`,
+      code: 'net.rgaus.lunchbox.quantity_not_permitted',
+    }), done);
+  });
 
   it(`should delete an item from a list`, function(done) {
     let list = mockList({listType: 'recipe'});
