@@ -4,16 +4,23 @@ const bluebird = require('bluebird');
 const Unitz = require('unitz');
 
 let defaultStoreReference = {
-  pastabilities: {
-    'Stretch Bread': '$2.00',
+  "Pasta's Bread": {
+    'Stretch Bread': {
+      '1 loaf': '$2.00',
+    },
   },
-  regionalmarket: {
+  'Regional Market': {
     'Flour City Pasta': {
+      '0.25 pound': '$2.50',
       '0.5 pound': '$4.50',
       '1 pound': '$8.00',
     },
+    'Spinach': {
+      '12 cups': '$5.00',
+      '6 cups': '$3.00',
+    },
   },
-  wegmans: {
+  'Wegmans': {
     'Carrot': {
       '1 carrot': '$3.00',
     },

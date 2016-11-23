@@ -11,11 +11,9 @@ import {v4 as uuid} from 'uuid';
 import Grid from 'gridfs-stream';
 Grid.mongo = mongoose.mongo;
 
+// TODO: make pagination work!
 function paginate(req, query) {
-  let page = req.query.page || req.body.page || 0;
-  return query
-    .skip(page * PAGE_LENGTH)
-    .limit(PAGE_LENGTH);
+  return query;
 }
 
 export default function constructRouter(Item, storeAlgoMethods) {
