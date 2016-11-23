@@ -244,6 +244,38 @@ export default function constructRouter(Item, storeAlgoMethods) {
     .catch(err => console.error(err))
   });
 
+  // update a list item
+  router.put('/lists/:listId/contents/:itemId', (req, res) => {
+    // body = {data: 'goes here', acts: 'like a patch'}
+    return Item.findOne({_id: req.params.listId}).exec().then(list => {
+      if (list === null) {
+        res.status(404).send({
+          status: 'err',
+          msg: "No such item to add to the list. Try another item?",
+          code: 'net.rgaus.lunchbox.item_no_exist',
+        });
+        return
+      }
+
+      // Once all checks are passed, add the item to the list.
+      return Item.update({
+        _id: req.params.listId,
+        type: 'list',
+      }, {
+        contents: list.contents.map(i => {
+          if (i._id === req.params.itemId) {
+            return Object.assign({}, i, req.body);
+          } else {
+            return i;
+          }
+        }),
+      }).exec().then(item => {
+        res.status(200).send({status: 'ok'});
+      });
+    })
+    .catch(err => console.error(err))
+  });
+
   // remove items from list
   router.delete('/lists/:listId/contents/:itemId', (req, res) => {
     return Item
