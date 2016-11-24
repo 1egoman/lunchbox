@@ -123,7 +123,7 @@ export default function constructRouter(Item, storeAlgoMethods) {
         res.status(404).send({
           status: 'ok',
           msg: 'No such item.',
-          code: 'net.rgaus.lunchbox.no_such_list',
+          code: 'net.rgaus.lunchbox.no_such_item',
         });
       }
     });
@@ -249,31 +249,39 @@ export default function constructRouter(Item, storeAlgoMethods) {
     // body = {data: 'goes here', acts: 'like a patch'}
     return Item.findOne({_id: req.params.listId}).exec().then(list => {
       if (list === null) {
-        res.status(404).send({
+        return res.status(404).send({
           status: 'err',
-          msg: "No such item to add to the list. Try another item?",
-          code: 'net.rgaus.lunchbox.item_no_exist',
+          msg: `No such list ${req.params.listId}.`,
+          code: 'net.rgaus.lunchbox.no_such_list',
         });
-        return
       }
 
-      // Once all checks are passed, add the item to the list.
+      // Is the item we're trying to update in the list? If not complain loudly.
+      let isInList = list.contents.find(i => i._id.toString() === req.params.itemId);
+      if (!isInList) {
+        return res.status(404).send({
+          status: 'err',
+          msg: `No such item ${req.params.itemId} in list ${req.params.listId}.`,
+          code: 'net.rgaus.lunchbox.no_such_list',
+        });
+      }
+
+      // Once all checks are passed, update the item within the list.
       return Item.update({
         _id: req.params.listId,
         type: 'list',
       }, {
         contents: list.contents.map(i => {
-          if (i._id === req.params.itemId) {
+          if (i._id.toString() === req.params.itemId) {
             return Object.assign({}, i, req.body);
           } else {
             return i;
           }
         }),
-      }).exec().then(item => {
-        res.status(200).send({status: 'ok'});
+      }).exec().then(({nModified}) => {
+        res.status(200).send({status: 'ok', nModified});
       });
-    })
-    .catch(err => console.error(err))
+    }).catch(err => console.error(err));
   });
 
   // remove items from list
