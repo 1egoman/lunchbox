@@ -197,7 +197,8 @@ export default function constructRouter(Item, storeAlgoMethods) {
 
   // add an item to a list
   router.post('/lists/:listId/contents', (req, res) => {
-    // body = {item: 'itemid here', quantity: '1 cup'}
+    // item body = {item: 'itemid here', quantity: '1 cup'}
+    // list body = {item: 'listid here', quantity: '1'}
 
     return Item.findOne({_id: req.body.item}).exec().then(list => {
       if (list === null) {
@@ -233,8 +234,7 @@ export default function constructRouter(Item, storeAlgoMethods) {
       }, {
         $push: {
           contents: Object.assign({}, list.toObject(), {
-            // data to filter through from the body to the list contents
-            quantity: list.type === "item" ? req.body.quantity : undefined,
+            quantity: req.body.quantity,
           }),
         },
       }).exec().then(item => {

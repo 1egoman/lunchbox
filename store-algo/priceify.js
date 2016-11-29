@@ -66,8 +66,14 @@ export function flattenList(list) {
     if (item.type === 'item') {
       items = addToItemsCombineDupes(items, [item]);
     } else {
-      // must be a list?
-      items = addToItemsCombineDupes(items, flattenList(item));
+      // Must be a list.
+      // Get the quantity of the recipe that was specified (default to 1).
+      let quantity = parseInt(item.quantity) || 1;
+
+      // Add the items to the flattened list `quantity` times.
+      for (let i = 0; i < quantity; i++) {
+        items = addToItemsCombineDupes(items, flattenList(item));
+      }
     }
   });
 
