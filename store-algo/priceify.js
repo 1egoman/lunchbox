@@ -18,7 +18,16 @@ export function removePantryItemsFromList(list, pantryList) {
       let quantity = Unitz.subtract(item.quantity, pantryItem.quantity, true);
       if (!quantity.startsWith('-')) {
         // We need to buy some of the item since we don't have it on hand
-        return Object.assign({}, item, {quantity});
+        // Before adding to the calc list, verify that the quantity is > 0
+        // The assumtion here is that 0 in every unit means that we have enough
+        // and don't have to buy any more.
+        let unit = Unitz.parse(quantity);
+        if (unit && unit.value > 0) {
+          return Object.assign({}, item, {quantity});
+        } else {
+          // Unit value is zero, doesn't need to be added to the list.
+          return false;
+        }
       } else {
         // we have too much! So we don't have to buy any.
         // remove the amount from the pantry that this recipe takes up
