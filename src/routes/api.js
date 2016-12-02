@@ -7,6 +7,8 @@ import Busboy from 'busboy';
 import path from 'path';
 import sharp from 'sharp';
 import {v4 as uuid} from 'uuid';
+import request from 'request';
+import titleCase from 'title-case';
 
 import Grid from 'gridfs-stream';
 Grid.mongo = mongoose.mongo;
@@ -200,7 +202,56 @@ export default function constructRouter(Item, storeAlgoMethods) {
     // item body = {item: 'itemid here', quantity: '1 cup'}
     // list body = {item: 'listid here', quantity: '1'}
 
-    return Item.findOne({_id: req.body.item}).exec().then(list => {
+    // Remote recipes have the shape of: {
+    //   ingredients: ['one', 'two', 'three'],
+    //   isRemoteRecipe: true,
+    // }
+
+
+
+    // If this is a recipe from a remote service (ie, discovered via
+    // recipepuppy) then create the item before adding it
+    let waitFor;
+    if (req.body.item && req.body.item.isRemoteRecipe) {
+      // Find the closest matching ingredients, or make them if required
+      waitFor = Promise.all(req.body.item.ingredients.map(ingr => {
+        return Item.findOne({type: 'item', $text: {$search: ingr}})
+        .exec().then(match => {
+          if (match) {
+            // return the match!
+            return match.toObject();
+          } else {
+            // If the item doesn't exist, make it.
+            let item = new Item({name: titleCase(ingr), type: 'item'});
+            return item.save().then(i => i.toObject());
+          }
+        });
+      })).then(contents => {
+        // Create the "master" recipe.
+        let item = new Item({
+          name: req.body.item.title,
+          type: 'list',
+          listType: 'recipe',
+          recipeHref: req.body.item.href,
+          contents,
+        });
+        return item.save();
+      }).then(i => {
+        // Add the id as if it was passed originally
+        req.body.item = i._id;
+      });
+    } else {
+      waitFor = Promise.resolve();
+    }
+
+
+
+    // We need to wrap this below code in the promise above because items need
+    // to be created (if the item to be added is a remote recipe) before they
+    // can be added to the list.
+    return waitFor.then(() => {
+      return Item.findOne({_id: req.body.item}).exec();
+    }).then(list => {
       if (list === null) {
         res.status(404).send({
           status: 'err',
@@ -240,8 +291,7 @@ export default function constructRouter(Item, storeAlgoMethods) {
       }).exec().then(item => {
         res.status(201).send({status: 'ok'});
       });
-    })
-    .catch(err => console.error(err))
+    }).catch(err => console.error(err))
   });
 
   // update a list item
@@ -323,6 +373,16 @@ export default function constructRouter(Item, storeAlgoMethods) {
         }));
       });
     });
+  });
+
+  // Fetch recipes from recipe puppy
+  // This is just a hack to get around cors really.
+  router.get('/remote-recipes', (req, res) => {
+    request({
+      method: 'GET',
+      url: `http://www.recipepuppy.com/api/`,
+      qs: req.query,
+    }).pipe(res);
   });
 
   return router;

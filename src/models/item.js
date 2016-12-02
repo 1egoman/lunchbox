@@ -9,6 +9,7 @@ const schema = new mongoose.Schema({
   // list only
   listType: 'string',
   contents: ['List'],
+  recipeHref: 'string', // a link to the recipe to make the thing
 
   // item only
   quantity: 'string',

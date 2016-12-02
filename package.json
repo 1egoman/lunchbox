@@ -27,8 +27,10 @@
     "mkdirp": "^0.5.1",
     "mongoose": "^4.7.0",
     "morgan": "~1.7.0",
+    "request": "^2.79.0",
     "serve-favicon": "~2.3.0",
     "sharp": "^0.16.2",
+    "title-case": "^2.1.0",
     "unitz": "1egoman/unitz",
     "uuid": "^2.0.3"
   },
