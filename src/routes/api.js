@@ -385,5 +385,56 @@ export default function constructRouter(Item, storeAlgoMethods) {
     }).pipe(res);
   });
 
+  router.get('/match-recipes', (req, res) => {
+    let recipeScores = {};
+    let allRecipes = {};
+
+    // get all data in the pantry
+    return Item.findOne({listType: 'pantry'}).exec().then(({contents}) => {
+      let pantry = contents.map(({_id}) => _id);
+
+      // Loop through each ite in the pantry and find all items that include the
+      // given pantry item. Increment each score.
+      let all = pantry.map(_id => {
+        return Item.find({
+          listType: 'recipe',
+          contents: {$elemMatch: {_id}},
+        }).exec().then(data => {
+          data.map(item => {
+            // store all recipe details
+            allRecipes[item._id] = item;
+
+            // increment the score for each matching item
+            if (!item) {
+              return
+            } else if (recipeScores[item._id]) {
+              recipeScores[item._id] += 1;
+            } else {
+              recipeScores[item._id] = 1;
+            }
+          });
+        });
+      });
+
+      return Promise.all(all).then(() => {
+        // sort the object by value, acending
+        let recipes = Object.keys(recipeScores)
+        .sort((a, b) => { // sort item ids in the correct order
+          return recipeScores[a] - recipeScores[b];
+        }).map(i => { // map item ids to the results
+          return Object.assign({}, allRecipes[i].toObject(), {
+            // The score is the amount of items that are in the pantry over the
+            // amount of items in the recipe. So, if 1 item in a recipe is in
+            // the pantry and there are two items in total in the recipe, the
+            // score would be 1/2.
+            score: recipeScores[i] / allRecipes[i].contents.length,
+          });
+        });
+
+        res.send({recipes});
+      });
+    });
+  });
+
   return router;
 }
